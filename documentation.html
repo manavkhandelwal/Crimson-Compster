@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="1348.17">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">This project is a website that manages the Crimson comp process (currently, just for the sports board). The website's functionality can be broken down into three pieces: login/registration, comper-side, and director-side. Here is an explanation of all three:</p>
+<p class="p2"><br></p>
+<p class="p1">But first, here are some overarching PHP lines (mostly contained in header.php):</p>
+<p class="p1"><span class="Apple-converted-space">    </span>1. if the session id global variable isn't empty, the user's name will be displayed</p>
+<p class="p1"><span class="Apple-converted-space">    </span>at the top to alert them who they are logged in as.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>2. depending on whether the user is a comper or director (which is logged using a</p>
+<p class="p1"><span class="Apple-converted-space">    </span>database query), a different top menu will appear.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>3. also have logo and favicon contained within header.php</p>
+<p class="p1"><span class="Apple-converted-space">    </span>4. can logout (via logout.php —&gt; same as C$50 Finance)</p>
+<p class="p2"><br></p>
+<p class="p1">1. LOG IN AND REGISTRATION</p>
+<p class="p1">Log in and registration are straightforward. Each of the three pages has links to the other two to allow the user to navigate between them easily. The three views are login_form.php, register_form.php (comper), and register_form_director.php (director), controlled by login.php, register.php, and registerd.php respectively.</p>
+<p class="p2"><br></p>
+<p class="p1">Logging in is simple. The user must input a username and password, and login.php uses CS50::query requests to see if the username is in the database and if the provided password matches the password in the database. Login.php also validates the submission more simply by ensuring that the two fields actually have something in that, otherwise alerting the user that the field was empty.</p>
+<p class="p2"><br></p>
+<p class="p1">Comper and director registration are quite similar. Both views are forms with a number of fields that must be filled by the user. The first level of validation is in client-side JavaScript. It notifies the user how many characters out of the 8-character HUID form they have used as they type it. In addition, when they try and click the register button, if their name has a number, their cell or HUID has a letter, or their email does not end in @college.harvard.edu, instead of reloading the page the JavaScript will print a red alert underneath the relevant text input form alerting them of their error. The rest of the validation is done PHP server-side. If they leave any of the fields blank, they will be notified and registration will fail. In addition, for director registration, they must input the correct registration code or registration will fail. Finally, if their submission has been validated, the database insertion will be done (unless their username has already been taken).</p>
+<p class="p2"><br></p>
+<p class="p1">2. COMPER-SIDE</p>
+<p class="p1">Once a comper has logged in, there are six pages he or she can access using the top navigation bar: MyArticles, Pitches, Due, Submitted, Schedule, and Update Information. These views are portfolio.php, pitches_view.php, articles_due.php, submitted_view.php, schedule_view.php, and information_view.php respectively, and are controlled by index.php, claim_pitch.php, current_articles.php, submitted.php, schedule.php, and update_info.php.</p>
+<p class="p2"><br></p>
+<p class="p1">When a comper logs in, index.php renders portfolio.php, which displays the articles a comper has had published. This is done using a database query that pulls all the articles that correspond to the current session id and have a status of 2 (published —&gt; 0 is unclaimed, 1 is claimed, 2 is published, 3 is submitted). Portfolio.php, the view, depends on whether the user has had any articles published (checked by seeing if the rendered associative array is empty). If not, the user is told that. If he or she has, then their articles are listed in a table (which includes a hyperlink to the article —&gt; done using php inside of an HTML tag).</p>
+<p class="p2"><br></p>
+<p class="p1">The comper can then navigate to pitches_view.php via claim_pitch.php’s GET request process. Each of the articles that has status 0 (unclaimed), found using a database query to that effect, are displayed in a table. Each row (and therefore article) has a radio button, by which the user can select one to claim (these radio buttons contain the id of the article in their value attribute for processing purposes). When the user clicks claim, their submission is validated and processed. First, they must have selected a button before they press claim; if not, they are alerted. Once they claim, the article’s information in the portfolio database is updated; the article’s associated userid becomes the session id while its status becomes 1 (claimed).</p>
+<p class="p2"><br></p>
+<p class="p1">They can then go to articles_due.php via current_articles.php, which displays something similar to pitches view, except the destination of the form is not current_articles.php itself, but submit.php. So, once the user picks an article to submit, they are taken to submit_view.php via submit.php, which takes the value of the radio button that was selected (which contains the id of the article) and uses that to craft a personalized form. The title of the article is displayed above a large textarea, which they can paste the contents of their article into. When they press submit, the form is validated and processed not by submit.php but by send_form_email.php. First, it ensures there is actually text in the article, then creates an email message to be sent with the contents of the email to a desired email address (currently my tertiary address, phillyfan362@gmail.com). I used the Postmark server for this since Cloud9 does not support PHP’s email functionality. This php program also updates the status of the chosen article from 1 to 3 (claimed to submitted).</p>
+<p class="p2"><br></p>
+<p class="p1">The user can also see submitted_view.php via submitted.php, which displays all the articles they have submitted. Another view they can see is schedule_view.php via schedule.php, which merely displays a Google Calendar iframe.</p>
+<p class="p2"><br></p>
+<p class="p1">Finally, they can see information_view.php via the controller update_info.php. If it is a GET request, the controller gets the user’s info using a database request that takes the value of $_SESSION[“id”]. It then displays it next to text input fields that allow the user to update their information. If they leave all 3 blank and try to submit, they will be alerted, otherwise the changes will be made. One piece of client-side validation is done: their email must end with @college.harvard.edu, otherwise they will be alerted before the form even reloads.</p>
+<p class="p2"><br></p>
+<p class="p1">3. DIRECTOR-SIDE</p>
+<p class="p1">Once a director has logged in, there are four pages he or she can access using the top navigation bar: Add Pitches, Add Article, Current Submissions, and Compers. These views are addpitch_view.php (controlled by index.php and add_pitch.php), addarticle_view.php (controlled by add_article.php), submitted_view_director.php (also controlled by submitted.php, which has dual functionality depending on what the role of the logged in user is), and compers_view.php (controlled by compers.php) respectively.</p>
+<p class="p2"><br></p>
+<p class="p1">When a director logs in, index.html renders addpitch_view.php. First, it gets the sports from the sports database and lists them as options in a drop-down menu. The other drop-down menu is hard-coded, and it has the five types of articles that can be pitched. They can then submit this form (validated by PHP to ensure all inputs are full) which then adds a new article to the portfolio database with userid 0 (no userid) and status 0 (unclaimed).</p>
+<p class="p2"><br></p>
+<p class="p1">They can also go to addarticle_view, which is a form that lets them publish a submitted article. Assuming the article had been published on the Crimson’s website, they can put its link in the form. Also, the options for articles to publish are only the ones that have been submitted; that array is rendered by add_article.php and sent to the view; once the form is validated, the information about the article is updated in the database (status set to 2 —&gt; published, and link info added).</p>
+<p class="p2"><br></p>
+<p class="p1">Directors’ final two views are just that… views. Compers.php renders compers_view.php with a multi-dimensional associative array of all the compers and their information, which is displayed in a table. Submitted.php does the same with submitted_view_director.php, except it displays all articles that have been submitted by all compers.</p>
+</body>
+</html>
